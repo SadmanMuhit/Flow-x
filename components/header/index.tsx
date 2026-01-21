@@ -6,6 +6,7 @@ import Link from 'next/link'
 import React, { useState } from 'react'
 import { Button } from '../ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet'
+import AuthModal from '../auth/auth.modal';
 
 const navItems =[
   {name: "Features", href: "#features", icon: Zap},
@@ -17,6 +18,7 @@ const navItems =[
 
 const Header = () => {
   const [inOpen, setInOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen]= useState(false);
   return (
     <header className='fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-primary/10'>
       <div className='container max-w-7xl mx-auto px-6'>
@@ -35,8 +37,8 @@ const Header = () => {
             ))}
           </nav>
           <div className='hidden md:flex items-center gap-3 animate-fade-in'>
-            <Button variant="ghost" size="sm" className='hover:!text-white'>Sign In</Button>
-            <Button variant="hero" size="sm">Get Started Free</Button>
+            <Button variant="ghost" size="sm" className='hover:!text-white' onClick={() => setIsAuthOpen(true)}>Sign In</Button>
+            <Button variant="hero" size="sm" onClick={() => setIsAuthOpen(true)}>Get Started Free</Button>
           </div>
           <Sheet open={inOpen} onOpenChange={setInOpen}>
             <SheetTrigger asChild className='md:hidden'>
@@ -70,8 +72,11 @@ const Header = () => {
             </div>
             </SheetContent>
           </Sheet>
+        <AuthModal isOpen={isAuthOpen} onOpenChange={setIsAuthOpen}/>
         </div>
+
       </div>
+
     </header>
   )
 }
