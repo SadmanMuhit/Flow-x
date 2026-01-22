@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { z } from 'zod';
+import { email, z } from 'zod';
 import { Dialog, DialogContent } from '../ui/dialog';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -9,6 +9,8 @@ import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Checkbox } from "@/components/ui/checkbox";
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 interface AuthMOdalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -32,6 +34,7 @@ const signSchema= z.object({
 
 const AuthModal = ({isOpen, onOpenChange}: AuthMOdalProps) => {
     const [activeTab, setActiveTab] = useState("signin");
+    const {signup, login, error, loading} = useAuth();
     const [from, setForm] = useState({
         first: "",
         last: "",
@@ -47,14 +50,51 @@ const AuthModal = ({isOpen, onOpenChange}: AuthMOdalProps) => {
         try {
             const validateData= signSchema.parse(from);
 
-            const name = `${validateData.first} ${validateData.last}`;   
-        } catch (error) {
+            const name = `${validateData.first} ${validateData.last}`; 
+            const ok = await signup(name,validateData.email,validateData.password);
             
+            if(ok){
+                toast.success("Check your email for activiting your account");  
+            }
+        } catch (err:any) {
+            if(err instanceof z.ZodError){
+                const errors: Record<string, string> ={};
+                err.issues.forEach((issue)=>{
+                    if(issue.path[0]){
+                        errors[issue.path[0] as string] = issue.message;
+                    }
+                });
+                setValidationErrors(errors)
+            }
         }
     }
     async function handleLogin(e: React.FormEvent){
         e.preventDefault();
+        setValidationErrors({});
+
+        try{
+            const validateData = loginSchema.parse({
+                email: from.email,
+                password: from.password
+            });
+            const ok = await login(validateData.email, validateData.password);
+            if(ok){
+                onOpenChange(false);
+            }
+        }catch(err){
+            if(err instanceof z.ZodError){
+                const errors: Record<string, string> ={};
+                err.issues.forEach((issue) =>{
+                    if(issue.path[0]){
+                        errors[issue.path[0] as string] = issue.message;
+                    }
+                });
+                setValidationErrors(errors);
+            }
+        }
     }
+
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
         <DialogContent className='sm:max-w-4xl bg-background/95 backdrop-blur-xl border-primary/20 p-0 overflow-hidden'>
@@ -99,10 +139,10 @@ const AuthModal = ({isOpen, onOpenChange}: AuthMOdalProps) => {
                          </div>
                          <Tabs value={activeTab} onValueChange={setActiveTab} className='w-full'>
                             <TabsList className='grid w-full grid-cols-2 bg-muted/20'>
-                            <TabsTrigger value='signin' className='data-[state=active]:bg-primary data-[state=active]:text-primary-foreground'>
+                            <TabsTrigger value='signin' disabled={loading} className='data-[state=active]:bg-primary data-[state=active]:text-primary-foreground'>
                                 Sign In
                             </TabsTrigger>
-                            <TabsTrigger value='register' className='data-[state=active]:bg-primary data-[state=active]:text-primary-foreground'>
+                            <TabsTrigger value='register' disabled={loading} className='data-[state=active]:bg-primary data-[state=active]:text-primary-foreground'>
                                 Register
                             </TabsTrigger>
                             </TabsList>
@@ -181,8 +221,8 @@ const AuthModal = ({isOpen, onOpenChange}: AuthMOdalProps) => {
                                                 <button className="text-primary hover:underline">privacy policy</button>
                                             </span>
                                             </div>
-                                            <Button type='submit' className='w-full h-11 bg-gradient-primary hover:shadow-glow-primary' variant="hero">Create Account <ArrowRight className='ml-2 w-4 h-4'/></Button>
-                                            {/* {error && <p className='text-red-500 text-sm'>{error}</p>} */}
+                                            <Button type='submit' disabled={loading} className='w-full h-11 bg-gradient-primary hover:shadow-glow-primary' variant="hero">Create Account <ArrowRight className='ml-2 w-4 h-4'/></Button>
+                                            {error && <p className='text-red-500 text-sm'>{error}</p>}
                                         </div>
                                 </form>
                                 <div className='text-center text-sm text-muted-foreground'>
