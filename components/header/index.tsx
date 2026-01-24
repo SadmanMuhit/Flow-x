@@ -7,6 +7,9 @@ import React, { useState } from 'react'
 import { Button } from '../ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet'
 import AuthModal from '../auth/auth.modal';
+import { useUser } from '@/hooks/useUser';
+import { DropdownMenu, DropdownMenuTrigger } from '@radix-ui/react-dropdown-menu';
+import { Avatar, AvatarFallback } from '@radix-ui/react-avatar';
 
 const navItems =[
   {name: "Features", href: "#features", icon: Zap},
@@ -17,8 +20,9 @@ const navItems =[
 ]
 
 const Header = () => {
-  const [inOpen, setInOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen]= useState(false);
+  const {user, loading} = useUser()
   return (
     <header className='fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-primary/10'>
       <div className='container max-w-7xl mx-auto px-6'>
@@ -37,10 +41,36 @@ const Header = () => {
             ))}
           </nav>
           <div className='hidden md:flex items-center gap-3 animate-fade-in'>
-            <Button variant="ghost" size="sm" className='hover:!text-white' onClick={() => setIsAuthOpen(true)}>Sign In</Button>
-            <Button variant="hero" size="sm" onClick={() => setIsAuthOpen(true)}>Get Started Free</Button>
+            {
+              loading ? (
+                <>
+                <p>...</p>
+                </>
+              ) : (
+                <>
+                {user ? (
+                  <>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className='relative w-8 h-8 rounded-full'>
+                        <Avatar>
+                          <AvatarFallback className='bg-primary text-primary-foreground'></AvatarFallback>
+                        </Avatar>
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </DropdownMenu>
+                  </>
+                ): (
+                  <>
+                  <Button variant="ghost" size="sm" className='hover:!text-white' onClick={() => setIsAuthOpen(true)}>Sign In</Button>
+                  <Button variant="hero" size="sm" onClick={() => setIsAuthOpen(true)}>Get Started Free</Button>
+                  </>
+                )}
+                </>
+              )
+            }
           </div>
-          <Sheet open={inOpen} onOpenChange={setInOpen}>
+          <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild className='md:hidden'>
               <Button variant={"ghost"} size={"sm"} className='p-2'>
                 <Menu className='w-5 h-5'/>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= title %></title>
+
+  <style>
+    /* Reset */
+    body, table, td, p, a {
+      margin: 0;
+      padding: 0;
+      text-size-adjust: 100%;
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+        Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      background-color: #f8fafc;
+      color: #374151;
+      line-height: 1.6;
+    }
+
+    .email-container {
+      max-width: 600px;
+      margin: 30px auto;
+      background: #ffffff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    }
+
+    .header {
+      padding: 30px;
+      text-align: center;
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      color: #ffffff;
+    }
+
+    .header img {
+      max-width: 140px;
+      margin-bottom: 15px;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .header p {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .content {
+      padding: 30px;
+      font-size: 15px;
+      color: #374151;
+    }
+
+    .content p {
+      margin-bottom: 15px;
+    }
+
+    .button {
+      display: inline-block;
+      padding: 14px 28px;
+      background: #4f46e5;
+      color: #ffffff !important;
+      text-decoration: none;
+      font-weight: 600;
+      border-radius: 6px;
+    }
+
+    .highlight {
+      background: #f1f5f9;
+      border-left: 4px solid #6366f1;
+      padding: 15px;
+      border-radius: 6px;
+      margin: 20px 0;
+      font-size: 14px;
+    }
+
+    .divider {
+      height: 1px;
+      background: #e5e7eb;
+      margin: 0 30px;
+    }
+
+    .footer {
+      padding: 20px 30px;
+      font-size: 12px;
+      text-align: center;
+      color: #6b7280;
+      background: #f9fafb;
+    }
+
+    .footer a {
+      color: #4f46e5;
+      text-decoration: none;
+      margin: 0 6px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="email-container">
+    <div class="header">
+      <img src="https://your-domain.com/logo.png" alt="FlowX Logo" />
+      <h1><%= title %></h1>
+      <p><%= subtitle %></p>
+    </div>
+
+    <div class="content">
+      <%- body %>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="footer">
+      <p>This email was sent by <strong>Flow-X</strong></p>
+      <p>If you didn’t request this email, you can safely ignore it.</p>
+      <p>
+        <a href="#">Unsubscribe</a> |
+        <a href="#">Privacy Policy</a> |
+        <a href="#">Terms & Service</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>

@@ -49,7 +49,6 @@ const AuthModal = ({isOpen, onOpenChange}: AuthMOdalProps) => {
 
         try {
             const validateData= signSchema.parse(from);
-
             const name = `${validateData.first} ${validateData.last}`; 
             const ok = await signup(name,validateData.email,validateData.password);
             
@@ -79,6 +78,7 @@ const AuthModal = ({isOpen, onOpenChange}: AuthMOdalProps) => {
             });
             const ok = await login(validateData.email, validateData.password);
             if(ok){
+                toast.success("Succefully Login");
                 onOpenChange(false);
             }
         }catch(err){

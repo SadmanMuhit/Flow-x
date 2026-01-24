@@ -3,7 +3,6 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { neon} from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import * as authShema from "@/db/auth-schema";
-import { request } from "http";
 import {nextCookies} from "better-auth/next-js";
 import { EmailService } from "@/services/emailService";
 const sql = neon(process.env.DATABASE_URL!);
