@@ -8,10 +8,18 @@ import { Button } from '../ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet'
 import AuthModal from '../auth/auth.modal';
 import { useUser } from '@/hooks/useUser';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@radix-ui/react-dropdown-menu';
+// import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@radix-ui/react-dropdown-menu';
 import { Avatar, AvatarFallback } from '@radix-ui/react-avatar';
 import { useAuth } from '@/hooks/useAuth';
-import { useRouter } from 'next/router';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 const navItems =[
   {name: "Features", href: "#features", icon: Zap},
@@ -57,49 +65,57 @@ const Header = () => {
                 <>
                 {user ? (
                   <>
+                  
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className='relative w-8 h-8 rounded-full'>
+                      <Button  className='relative w-8 h-8 rounded-full'>
                         <Avatar>
-                          <AvatarFallback className='bg-primary text-primary-foreground'>
+                          <AvatarFallback className='bg-primary  text-primary-foreground'>
                             {user.name?.charAt(0) || "U"}
                           </AvatarFallback>
                         </Avatar>
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className='w-56' align='end'>
+
+                    <DropdownMenuContent className='w-56 bg-black/60' align='end' >
                       <div className='flex items-center justify-start gap-2 p-2'>
-                        <Avatar className='h-8 w-8'>
-                          <AvatarFallback className='bg-primary text-primary-foreground'>
+                        <Avatar className='h-8 w-8 '>
+                          <AvatarFallback className='bg-primary rounded-full py-1 px-3 text-primary-foreground'>
                             {user.name?.charAt(0) || "U"}
                           </AvatarFallback>
                         </Avatar>
+
                         <div className='flex flex-col space-y-1'>
                           <p className='text-sm font-medium leading-none'>{user.name}</p>
                           <p className='text-xs leading-none text-muted-foreground'>{user.email}</p>
                         </div>
                       </div>
+                      
                       <DropdownMenuSeparator/>
+
                       <Link href="/dashboard" passHref>
-                      <DropdownMenuItem className='hover:!bg-slate-900 !text-white'>
+                      <DropdownMenuItem className='flex hover:!bg-slate-900 !text-white'>
                         <LayoutDashboard className='mr-2 h-4 w-4'/>
                         Dashboard
                       </DropdownMenuItem>
                       </Link>
+
                       <Link href="/dashboard/billing" passHref>
-                      <DropdownMenuItem className='hover:!bg-slate-900 !text-white'>
+                      <DropdownMenuItem className='flex hover:!bg-slate-900 !text-white'>
                         <CreditCard className='mr-2 h-4 w-4'/>
                         Billing
                       </DropdownMenuItem>
                       </Link>
+
                       <Link href="/dashboard/settings" passHref>
-                      <DropdownMenuItem className='hover:!bg-slate-900 !text-white'>
+                      <DropdownMenuItem className='flex hover:!bg-slate-900 !text-white'>
                         <Settings className='mr-2 h-4 w-4'/>
                         Settings
                       </DropdownMenuItem>
                       </Link>
+
                       <DropdownMenuSeparator/>
-                      <DropdownMenuItem className='text-red-500 focus:text-red-500 focus:bg-red-500/10' onClick={() => handlelogout()}>
+                      <DropdownMenuItem className='flex text-red-500 focus:text-red-500 focus:bg-red-500/10' onClick={() => handlelogout()}>
                         <LogOut className='mr-2 h-4 w-4'/>
                         Logout
                       </DropdownMenuItem>
