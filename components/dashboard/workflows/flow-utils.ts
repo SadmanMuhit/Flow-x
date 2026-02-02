@@ -87,5 +87,23 @@ export function reindexStepNumbers(nds: Node[], eds: Edge[]): Node[]{
 
     const finalOrder = [...chain, ...remainingOrdered];
     const idToSetp = new Map<string, number>();
-    finalOrder.forEach((id, idx) => idToSetp.set)
+    finalOrder.forEach((id, idx) => idToSetp.set(id, idx + 1));
+
+
+    return nds.map((n) => {
+        const newStep = idToSetp.get(n.id);
+        return isStep(n) && newStep && (n.data as any).setNumber !== newStep ? {...n,data:{...n.data, stepNumber: newStep}} : n;
+    })
+}
+
+export function buildInitailFlow(foundTemplate: any, configuredSteps: Record<number, boolean>) {
+    let nodes: Node[] = foundTemplate.steps?.map((step:string, index:number) =>({
+        id: `step-${index}`,
+        type: "custom",
+        position: getNodePosition(index),
+        data:{
+            label: step,
+
+        }
+    }))
 }
