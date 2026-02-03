@@ -7,6 +7,7 @@ import "reactflow/dist/style.css";
 import { mockTemplate } from '@/lib/mock';
 import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
+import { reindexStepNumbers } from '@/components/dashboard/workflows/flow-utils';
 
 const Page = () => {
     const params = useParams();
@@ -20,12 +21,77 @@ const Page = () => {
     const [template, setTemplate] = useState<any>(null);
     const [isModelOpen, setIsModelOpen] = useState(false);
     const [modelNodeData, setModelNodeData] = useState<any>(null);
+    const [ReactFlowInstance, setReactFlowInstance] = useState<any>(null);
+    const [nodeErrors, setNodeErrors] = useState<Record<string,string | null >>(
+        {}
+    );
 
     const ReactFlowWrapper = useRef<HTMLDivElement>(null);
     
     const handleNodeChange = useCallback((changes:any) =>{
         onNodesChange(changes);
+        setNodes((nds) =>reindexStepNumbers(nds, edges));
     },[onNodesChange, setNodes, edges]);
+
+    const onDragStart = useCallback((event: React.DragEvent, nodeType: any) =>{
+        event.dataTransfer.setData(
+            "application/reactflow",
+            JSON.stringify(nodeType)
+        );
+        event.dataTransfer.effectAllowed = "move";
+    }, []);
+
+    const onDrop = useCallback(
+        (event: React.DragEvent) => {
+            event.preventDefault();
+            if(!ReactFlowWrapper.current || !ReactFlowInstance) return;
+
+            const bounds = ReactFlowWrapper.current.getBoundingClientRect();
+            const nodeData = JSON.parse(
+                event.dataTransfer.getData("application/reactflow")
+            );
+            const position = ReactFlowInstance.project({
+                x: event.clientX - bounds.left,
+                y: event.clientY - bounds.top,
+            });
+            const newId = `${nodeData.id}-${Date.now()}`;
+
+            setNodes((nds)=> {
+                const selectedStep = (selectedNode?.data as any)?.stepNumber ?? null;
+                const currentStepCount = nds.reduce(
+                    (count, n) =>
+                        typeof (n.data as any)?.stepNumber == "number" ? count + 1 : count, 0
+                );
+                const insertionStep = selectedStep !== null ? selectedStep + 1 : currentStepCount + 1️;
+                const shifted = nds.map((n)=>{
+                    const sn = (n.data as any)?.stepNumber;
+                    return typeof sn == "number" && sn > insertionStep ? {...n, data: {...n.data, stepNumber: sn + 1}}: n;
+                });
+                const newNode = {
+                    id: newId,
+                    type: "custom",
+                    position,
+                    data: {
+                        label: nodeData.name,
+                        description: nodeData.description,
+                        icon: nodeData.icon,
+                        stepNumber: insertionStep,
+                        isConfigured: false,
+                        config: null,
+                    },
+                };
+                return reindexStepNumbers(shifted.concat(newNode),edges);
+            });
+            if(selectedNode){
+                setEdges((eds) => {
+                    const newEdges = linkEdges(selectedNode.id, newId, eds);
+                    setNodes((nds) => reindexStepNumbers(nds,newEdges));
+                    return newEdges;
+                })
+            }
+        },
+        [ReactFlowInstance, selectedNode, edges, setEdges, setNodes]
+    )
     
     useEffect(() =>{
      const foundTemplate = mockTemplate.find((t) => t.id == slug);

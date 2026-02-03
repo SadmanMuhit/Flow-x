@@ -1,5 +1,5 @@
 import { ArrowRight, Bell, Brain, Clock, Code, CreditCard, Database, FileText, Filter, Hash, Mail, MessageSquare, RotateCcw, Timer, Webhook, Zap } from "lucide-react";
-import { Edge, Node } from "reactflow";
+import { Edge, Node } from "reactflow"; 
 import { object } from "zod";
 
 export interface Position {
@@ -103,7 +103,69 @@ export function buildInitailFlow(foundTemplate: any, configuredSteps: Record<num
         position: getNodePosition(index),
         data:{
             label: step,
+            description: `step ${index + 1}`,
+            icon: getIconForStep(step),
+            isStartNode: index === 0,
+            stepNumber: index + 1,
+            isConfigured: !!configuredSteps[index + 1],
+        },
+    })
+);
+let edges: Edge[] = foundTemplate.steps.slice(1).map((_: unknown, index: number)=> ({
+    id: `edge-${index}-${index + 1}`,
+    source: `step-${index}`,
+    target: `step-${index + 1}`,
+    sourceHendle: "right",
+    targetHendle: "left",
+    animated: true,
+    style: EDGE_STYLE,
+}));
 
-        }
-    }))
+const aiConnIndex = foundTemplate.steps.findIndex((s: string)=> s.toLowerCase().includes("ai generate")
+);
+if(aiConnIndex !== -1){
+    const insertionStep = aiConnIndex + 2;
+    nodes = nodes.map((n)=>{
+        const sn = (n.data as any)?.stepNumber;
+        return typeof sn == "number" && sn > insertionStep ? {...n, data: {...n.data, stepNumber: sn + 1}} : n;
+    });
+
+    const aiNodeId = "ai-tool-1";
+    nodes.push({
+        id: aiNodeId,
+        type: "custom",
+        position: {x: 400, y: 350 },
+        data: {
+            label: "OpenAi Model",
+            description: "AI Processing",
+            icon: "Brain",
+            isStartNode: false,
+            stepNumber: insertionStep,
+            isConfigured: !!configuredSteps[insertionStep],
+        },
+    });
+    const sourceId = `step-${aiConnIndex}`;
+    const targetId = `step-${aiConnIndex + 1}`;
+    edges = edges.filter((e) => !(e.source == sourceId && e.target == targetId));
+    edges.push({
+        id: `edgs-${sourceId}-${aiNodeId}`,
+        source: sourceId,
+        target: aiNodeId,
+        sourceHandle: "bottom",
+        targetHandle: "top",
+        animated: true,
+        style: EDGE_STYLE,
+    });
+    edges.push({
+        id: `edge-${aiNodeId}-${targetId}`,
+        source: aiNodeId,
+        target: targetId,
+        sourceHandle: "right",
+        targetHandle: "left",
+        animated: true,
+        style: EDGE_STYLE,
+    });
+}
+
+return {edges, nodes};
 }
