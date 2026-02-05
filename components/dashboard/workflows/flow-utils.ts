@@ -7,7 +7,7 @@ export interface Position {
     y: number;
 }
 
-export const ICON_MAP: Record<string, react.ComponentType<{className?: string}>> = {
+export const ICON_MAP: Record<string, React.ComponentType<{className?: string}>> = {
     Webhook,
     Mail,
     Database,

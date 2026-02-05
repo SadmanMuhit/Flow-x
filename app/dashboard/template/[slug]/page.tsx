@@ -7,7 +7,10 @@ import "reactflow/dist/style.css";
 import { mockTemplate } from '@/lib/mock';
 import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
-import { reindexStepNumbers } from '@/components/dashboard/workflows/flow-utils';
+import { buildInitailFlow, EDGE_STYLE, reindexStepNumbers } from '@/components/dashboard/workflows/flow-utils';
+import { Connection } from '@neondatabase/serverless';
+import { nodeTypes } from '@/components/dashboard/workflows/custom-node';
+import { Upload } from 'lucide-react';
 
 const Page = () => {
     const params = useParams();
@@ -25,6 +28,10 @@ const Page = () => {
     const [nodeErrors, setNodeErrors] = useState<Record<string,string | null >>(
         {}
     );
+
+    const [configuredSteps, setConfiguredSteps] = useState<Record<number,boolean>>({});
+    const [userConnections, setUserConnections] = useState<any[]>([]);
+    const [connLoading, setConnLoading] = useState(false);
 
     const ReactFlowWrapper = useRef<HTMLDivElement>(null);
     
@@ -62,7 +69,7 @@ const Page = () => {
                     (count, n) =>
                         typeof (n.data as any)?.stepNumber == "number" ? count + 1 : count, 0
                 );
-                const insertionStep = selectedStep !== null ? selectedStep + 1 : currentStepCount + 1️;
+                const insertionStep = selectedStep !== null ? selectedStep + 1 : currentStepCount + 1;
                 const shifted = nds.map((n)=>{
                     const sn = (n.data as any)?.stepNumber;
                     return typeof sn == "number" && sn > insertionStep ? {...n, data: {...n.data, stepNumber: sn + 1}}: n;
@@ -91,13 +98,68 @@ const Page = () => {
             }
         },
         [ReactFlowInstance, selectedNode, edges, setEdges, setNodes]
-    )
-    
+    );
+       const onConnect = useCallback(
+        (params: Connection) => {
+            const edgeId = `edge-${params.source}-${params.target}-${Date.now()}`;
+            setEdges((eds) =>
+            addEdge({...params, id: edgeId, animated: true, style: EDGE_STYLE},
+                eds
+            )
+            );
+        },
+        [setEdges]
+       );
+
+       const onDragOver = useCallback((event: React.DragEvent)=> {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "move";
+       },[]);
+
+       const onNodeClick = useCallback((event: React.MouseEvent, node: Node) =>{
+        setSelectedNode(node);
+       },[]);
+
+       const openModel = useCallback((nodeData: any) =>
+    {
+        setModelNodeData(nodeData);
+        setIsModelOpen(true);
+    },
+    []
+    );
+
+    const closeModel = useCallback(() =>{
+        setIsModelOpen(false);
+        setModelNodeData(null);
+    },[])
+
+       const onNodeDoubleClick = useCallback(
+        (event: React.MouseEvent, node: Node) => {
+            openModel(node.data);
+        },
+        [openModel]
+       );
+
+       useEffect(() =>{
+        if(selectedNode){
+            const updated = nodes.find((n) => n.id == selectedNode.id);
+            if(
+                updated && Boolean((updated.data as any)?.isConfigured) !==
+                Boolean((selectedNode.data as any)?.isConfigured)
+            ){
+                selectedNode(updated);
+            }
+        }
+       },[nodes, selectedNode]);
     useEffect(() =>{
      const foundTemplate = mockTemplate.find((t) => t.id == slug);
      if(!foundTemplate) return;
      setTemplate(foundTemplate);
-    },[slug]) 
+
+     const {nodes: initialNodes,edges: initialEdges} = buildInitailFlow(foundTemplate,configuredSteps);
+     setNodes(reindexStepNumbers(initialNodes, initialEdges));
+     setEdges(initialEdges);
+    },[slug,setNodes, setEdges]);
   return (
     <div className='flex h-full'>
       <div className='flex-1 p-6 flex flex-col h-full'>
@@ -111,13 +173,35 @@ const Page = () => {
                 <Card className='bg-[#121826] border-[#1E293B] flex-1 relative'>
                     <CardContent className='p-0 h-full'>
                         <div ref={ReactFlowWrapper} className='w-full h-full'>
-                            <ReactFlow nodes={nodes} edges={edges} onNodesChange={handleNodeChange}></ReactFlow>
+                            <ReactFlow
+                            nodes={nodes} 
+                            edges={edges} 
+                            onNodesChange={handleNodeChange} 
+                            onEdgesChange={onEdgesChange} 
+                            onConnect={onConnect} 
+                            onInit={setReactFlowInstance} 
+                            onDrop={onDrop} 
+                            onDragOver={onDragOver}
+                            onNodeClick={onNodeClick}
+                            onNodeDoubleClick={onNodeDoubleClick}
+                            nodeTypes={nodeTypes}
+                            fitView
+                            attributionPositon= "bottom-right"
+                            className="bg-[#0B0F14]"
+                            >
+                                <Background color='#334155' gap={16}/>
+                                <Controls className='bg-[#1E293B] border-[#334155] text-gray-300'/>
+                            </ReactFlow>
                         </div>
                     </CardContent>
                 </Card>
       </div>
+      <div className='w-80 border-l border-[#1e293b] p-4 overflow-y-auto'>
+
+      </div>
+
     </div>
-  )
-}
+  );
+};
 
 export default Page
