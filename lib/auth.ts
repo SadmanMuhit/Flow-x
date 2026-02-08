@@ -4,7 +4,7 @@ import { neon} from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import * as authShema from "@/db/auth-schema";
 import {nextCookies} from "better-auth/next-js";
-import { EmailService } from "@/services/emailService";
+import { emailService } from "@/services/emailService";
 const sql = neon(process.env.DATABASE_URL!);
 export const db = drizzle(sql); 
 export const auth = betterAuth({
@@ -25,7 +25,7 @@ export const auth = betterAuth({
         sendVerificationEmail: async ({user, url,token},request) =>{
             const finalURL =(process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000") + url;
 
-            await EmailService.sendVerificationEmail({
+            await emailService.sendVerificationEmail({
                 to: user.email,
                 name: user.name,
                 url: finalURL,

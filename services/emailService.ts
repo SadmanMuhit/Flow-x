@@ -1,61 +1,26 @@
-import ejs from 'ejs';
-import path from 'path';
-import nodemailer from 'nodemailer';
+import nodemailer from "nodemailer";
+import ejs from "ejs";
+import path from "path";
 
-const  transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT) || 587,
-    service: process.env.SMTP_SERVICE,
-    auth:{
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-    },
-});
+export const emailService = {
+  sendVerificationEmail: async ({ to, name, url }: { to: string; name: string; url: string }) => {
+    const html = await ejs.renderFile(path.join(process.cwd(), "views", "emailTemplate.ejs"), { name, url });
 
-export interface EmailData{
-    to: string;
-    name: string;
-    url?: string;
-    dashboardUrl?: string;
-    [key: string]: any;
-}
+    const transporter = nodemailer.createTransport({
+      host: "smtp.example.com", // replace with your SMTP
+      port: 587,
+      secure: false,
+      auth: {
+        user: "your@email.com",
+        pass: "yourpassword",
+      },
+    });
 
-export class EmailService{
-       private static async randerTemplate(templateName:string, data:EmailData): Promise<string>{
-        const templatePath = path.join(process.cwd(), 'templates',"src", "templates","emails", `${templateName}.ejs`);
-
-        return new Promise((resolve, reject)=>{
-            ejs.renderFile(templatePath, data, (err:any, html:string)=>{
-                if(err){
-                    console.log("Error rendering email template:", err);
-                    reject(err);
-                }else{
-                    resolve(html);
-                }
-            
-            });
-        });
-    }
-    private static async sendEmail(to:string, subject:string, html:string):Promise<boolean>{
-        try {
-            await  transporter.sendMail({
-                from: process.env.SMTP_USER,
-                to,
-                subject,
-                html,
-            }); 
-            return true;
-        } catch (error) {
-            return false;
-        }
-}
- static async sendVerificationEmail(data: EmailData): Promise<boolean>{
-    try {
-        const html = await this.randerTemplate("email-verification", data);
-        return await this.sendEmail(data.to, "verify your email address - Flow-x", html)
-    } catch (error) {
-        console.error("error sending verification email:",error);
-        return false;
-    }
- }
-}
+    await transporter.sendMail({
+      from: '"FlowX Team" <no-reply@flowx.com>',
+      to,
+      subject: "Verify Your Email",
+      html,
+    });
+  },
+};

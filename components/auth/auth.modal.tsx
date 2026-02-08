@@ -23,7 +23,7 @@ const loginSchema= z.object({
     password: z.string().min(8, "password must be at least 8 characters long")
 });
 
-const signSchema= z.object({
+const signupSchema= z.object({
     first: z.string().min(1, "first name is required"),
     last: z.string().min(1, "last name is required"),
     email: z.email("invalid email address"),
@@ -50,7 +50,7 @@ const AuthModal = ({isOpen, onOpenChange}: AuthMOdalProps) => {
         setValidationErrors({});
 
         try {
-            const validateData= signSchema.parse(from);
+            const validateData= signupSchema.parse(from);
             const name = `${validateData.first} ${validateData.last}`; 
             const ok = await signup(name,validateData.email,validateData.password);
             
