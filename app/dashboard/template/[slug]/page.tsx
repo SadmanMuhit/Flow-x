@@ -26,6 +26,8 @@ import {
 } from '@/components/dashboard/workflows/flow-utils';
 import { nodeTypes } from '@/components/dashboard/workflows/custom-node';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Icon, Play, Save } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const Page = () => {
   const params = useParams();
@@ -185,7 +187,25 @@ const Page = () => {
             Drag items from the right to add to your flow.
           </p>
           <div className='flex items-center gap-3'>
-
+            {[
+              {
+                icon: Play,
+                text: "Test",
+                variant: "outline",
+                onClick: handleTestWorkflow,
+              },
+              {
+                icon: Save,
+                text: "Save",
+                variant: "outline",
+                onClick: handleSaveWorkflow,
+              },
+            ].map(({icon: Icon, text, variant, onClick})=>(
+              <Button key={text} variant={variant as any} className={variant == "outline" ? "border-[#334155] text-gray-300 hover:bg-[#1E293B] hover:text-white" : "bg-green-500 hover:bg-green-600 text-black font-medium"} onClick={onClick}>
+                <Icon className='w-4 h-4 mr-2'/>
+                {text}
+              </Button>
+            ))}
           </div>
         </header>
 
