@@ -28,6 +28,7 @@ import { nodeTypes } from '@/components/dashboard/workflows/custom-node';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Icon, Play, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import NodeConfigurationModel from '@/components/dashboard/workflows/node-configuration-model';
 
 const Page = () => {
   const params = useParams();
@@ -70,6 +71,9 @@ const Page = () => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
   }, []);
+
+  const handleTestWorkflow = useCallback(async()=> {},[]);
+  const handleSaveWorkflow = useCallback(async()=> {},[]);
 
   const onDrop = useCallback(
     (event: React.DragEvent) => {
@@ -141,8 +145,8 @@ const Page = () => {
 
     const { nodes: initialNodes, edges: initialEdges } = buildInitialFlow(
       foundTemplate,
-      {}
-    );
+      configuredSteps
+    );  
 
     setNodes(reindexStepNumbers(initialNodes, initialEdges));
     setEdges(initialEdges);
@@ -179,13 +183,11 @@ const Page = () => {
     <div className="flex h-screen bg-[#0B0F14]">
       {/* CANVAS */}
       <div className="flex-1 p-6 flex flex-col h-full">
-        <header className="mb-6">
-          <h1 className="text-3xl font-bold text-white">
-            Edit: {template?.name || 'New Workflow'}
-          </h1>
-          <p className="text-gray-400">
-            Drag items from the right to add to your flow.
-          </p>
+        <div className='flex items-center justify-between mb-6'>
+          <div>
+            <h1 className='text-3xl font-bold text-white'>Edit Template: {template?.name}</h1>
+            <p>{template?.description || "Design your workflow by connection nodes"}</p>
+          </div>
           <div className='flex items-center gap-3'>
             {[
               {
@@ -197,7 +199,7 @@ const Page = () => {
               {
                 icon: Save,
                 text: "Save",
-                variant: "outline",
+                variant: "default",
                 onClick: handleSaveWorkflow,
               },
             ].map(({icon: Icon, text, variant, onClick})=>(
@@ -207,8 +209,7 @@ const Page = () => {
               </Button>
             ))}
           </div>
-        </header>
-
+        </div>
         <Card className="bg-[#121826] border-[#1E293B] flex-1 overflow-hidden">
           <CardContent className="p-0 h-full">
             <div ref={reactFlowWrapper} className="w-full h-full">
@@ -338,6 +339,7 @@ const Page = () => {
         </Tabs>
       </div>
       {/* Configuration Model (double click a node to open) */}
+      <NodeConfigurationModel/>
     </div>
   );
 };
