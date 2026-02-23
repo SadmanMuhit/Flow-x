@@ -56,13 +56,33 @@ const getPlatformName = (label: string): string =>{
     if(lower.includes("weebhook trigger")) return "weebhook trigger";
     if(lower.includes("schedule")) return "schedule-trigger";
     if(lower.includes("http")) return "http-request";
-    if(lower.includes("notification")) return "send-notification";
+    if(lower.includes("notification")) return "send-notification";  
     if(lower.includes("ai generate")) return "ai-generate";
     if(lower.includes("condition")) return "condition";
     if(lower.includes("loop")) return "loop";
     if(lower.includes("delay")) return "delay";
     return label.toLowerCase().replace(/\s+/g, "-");
 };
+   const inputCls = "w-full py-2 bg-[#0B0F14] border border-gray-600 rounded-md text-white placeholder-gray-500 focus:border-green-400 focus:outline-none";
+    const selectCls = "w-full px-3 py-2 bg-[#0B0F14] border border-gray-600 rounded-md text-white focus:border-green-400 focus:outline-none"
+    const Field = ({
+        label,
+        children,
+    }: {
+        label:string;
+        children: React.ReactNode;
+    }) => (
+        <div>
+            <label htmlFor="" className='block text-sm font-medium text-gray-300 mb-2'>{label}</label>
+            {children}
+        </div>
+    );
+    const isAuthProvider = (p: string) =>
+        OAUTH_PROVIDERS.includes(p.toLowerCase());
+    const isCoreProvider = (p: string) =>
+        CORE_PROVIDERS.includes(p.toLowerCase());
+    const isApiKeyProvider = (p: string) =>
+        API_KEY_PROVIDERS.includes(p.toLowerCase());
 const NodeConfigurationModel = ({
     isOpen,
     onClose,
@@ -107,6 +127,68 @@ const NodeConfigurationModel = ({
     const isApiKey = isApiKeyProvider(platformName);
     const isCore = isCoreProvider(platformName);
     const displayName = getDisplayName  (platformName);
+
+    if(!isOpen || !nodeData) return null;
+
+    const handleSave = async () => {
+
+    }
+
+    const handleOAuthConnection = (platform: string) => {
+
+    }
+
+    const renderCoreConfiguration = () => {
+        switch (platformName) {
+            case "webhook-trigger":
+                return (
+                    <div className='space-y-3'>
+                        <Field label='Webhook URL'>
+                            <div className='p-3 bg-[#0B0F14] border border-gray-600 rounded-md'>
+                                <code className='text-sm text-green-400'>
+                                </code>
+                            </div>
+                            <p className='text-xs text-gray-400 mt-1'>
+                                This URL will bg used to trigger the workflow. You can send a POST request with JSON payload to this URL to start the workflow.
+                            </p>
+                        </Field>
+                    </div>
+                )
+                case "schedule-trigger":
+                    return (
+                        <div className='space-y-3'>
+                            <Field label='Schedule Type'>
+                                <select className={selectCls} value={coreConfig.scheduleType || "interval"} onChange={(e) =>
+                                    setCoreConfig({...coreConfig,scheduleType: e.target.value})
+                                }>
+                                <option value="interval">Interval</option>
+                                <option value="cron">Cron Expression</option>
+                                </select>
+                            </Field>
+                            {
+                                coreConfig.scheduleType == "core" ? (
+                                    <Field label='Core Expression'>
+                                        <input type='text' value={coreConfig.cronExpresion || ""}
+                                        onChange={(e) =>
+                                            setCoreConfig({
+                                                ...coreConfig,
+                                                cronExpression: e.target.value,
+                                            })
+                                        }
+                                        placeholder='0 */5 ****'
+                                        className={inputCls}
+                                        />
+                                    </Field>
+                                ): ()
+                            }
+                        </div>
+                    );
+                break;
+        
+            default:
+                break;
+        }
+    }
   return (
     <div>
       
