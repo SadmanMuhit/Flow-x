@@ -1,8 +1,7 @@
 'use client';
 
-import { useUser } from '@/hooks/useUser';
-import { useParams } from 'next/navigation';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useParams } from 'next/navigation';
 
 import ReactFlow, {
   Background,
@@ -17,7 +16,6 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 
 import { mockTemplate } from '@/lib/mock';
-import { Card, CardContent } from '@/components/ui/card';
 import {
   buildInitialFlow,
   EDGE_STYLE,
@@ -25,39 +23,36 @@ import {
   TOOL_NODES,
 } from '@/components/dashboard/workflows/flow-utils';
 import { nodeTypes } from '@/components/dashboard/workflows/custom-node';
+
+import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Icon, Play, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+
+import { Play, Save } from 'lucide-react';
 import NodeConfigurationModel from '@/components/dashboard/workflows/node-configuration-model';
 
 const Page = () => {
-  const params = useParams();
-  const slug = params.slug as string;
-  const { user } = useUser();
+  const { slug } = useParams<{ slug: string }>();
 
-  /* ================= STATES ================= */
+  /* ================= STATE ================= */
   const [nodes, setNodes, onNodesChange] = useNodesState<Node[]>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [template, setTemplate] = useState<any>(null);
 
-  const [configuredSteps, setConfiguredSteps] = useState<Record<number, boolean>>(
+  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+
+  // node.id => configured
+  const [configuredSteps, setConfiguredSteps] = useState<Record<string, boolean>>(
     {}
   );
-  const [userConnections, setUserConnections] = useState<any[]>([]);
-  const [connLoading, setConnLoading] = useState(false);
 
   const [rfInstance, setRfInstance] = useState<ReactFlowInstance | null>(null);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
 
-  /* ================= HANDLERS ================= */
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalNode, setModalNode] = useState<Node | null>(null);
 
-  const onNodesChangeControlled = useCallback(
-    (changes: any) => {
-      onNodesChange(changes);
-    },
-    [onNodesChange]
-  );
+  /* ================= HANDLERS ================= */
 
   const onDragStart = (event: React.DragEvent, nodeType: any) => {
     event.dataTransfer.setData(
@@ -67,13 +62,10 @@ const Page = () => {
     event.dataTransfer.effectAllowed = 'move';
   };
 
-  const onDragOver = useCallback((event: React.DragEvent) => {
+  const onDragOver = (event: React.DragEvent) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
-  }, []);
-
-  const handleTestWorkflow = useCallback(async()=> {},[]);
-  const handleSaveWorkflow = useCallback(async()=> {},[]);
+  };
 
   const onDrop = useCallback(
     (event: React.DragEvent) => {
@@ -81,7 +73,7 @@ const Page = () => {
       if (!reactFlowWrapper.current || !rfInstance) return;
 
       const bounds = reactFlowWrapper.current.getBoundingClientRect();
-      const nodeData = JSON.parse(
+      const nodeMeta = JSON.parse(
         event.dataTransfer.getData('application/reactflow')
       );
 
@@ -90,19 +82,17 @@ const Page = () => {
         y: event.clientY - bounds.top,
       });
 
-      const newNodeId = `${nodeData.id}-${Date.now()}`;
+      const id = `${nodeMeta.id}-${Date.now()}`;
 
       const newNode: Node = {
-        id: newNodeId,
+        id,
         type: 'custom',
         position,
         data: {
-          label: nodeData.name,
-          description: nodeData.description,
-          icon: nodeData.icon,
+          label: nodeMeta.name,
+          description: nodeMeta.description,
+          icon: nodeMeta.icon,
           stepNumber: nodes.length + 1,
-          isConfigured: false,
-          config: null,
         },
       };
 
@@ -112,9 +102,9 @@ const Page = () => {
         setEdges((eds) =>
           addEdge(
             {
-              id: `e-${selectedNode.id}-${newNodeId}`,
+              id: `e-${selectedNode.id}-${id}`,
               source: selectedNode.id,
-              target: newNodeId,
+              target: id,
               animated: true,
               style: EDGE_STYLE,
             },
@@ -123,7 +113,7 @@ const Page = () => {
         );
       }
     },
-    [rfInstance, selectedNode, nodes.length, edges]
+    [rfInstance, nodes.length, edges, selectedNode]
   );
 
   const onConnect = useCallback(
@@ -132,97 +122,100 @@ const Page = () => {
         addEdge({ ...params, animated: true, style: EDGE_STYLE }, eds)
       );
     },
-    [setEdges]
+    []
   );
 
-  /* ================= EFFECTS ================= */
-
-  useEffect(() => {
-    const foundTemplate = mockTemplate.find((t) => t.id === slug);
-    if (!foundTemplate) return;
-
-    setTemplate(foundTemplate);
-
-    const { nodes: initialNodes, edges: initialEdges } = buildInitialFlow(
-      foundTemplate,
-      configuredSteps
-    );  
-
-    setNodes(reindexStepNumbers(initialNodes, initialEdges));
-    setEdges(initialEdges);
-  }, [slug, setNodes, setEdges]);
-
-  /* ================= HELPERS ================= */
-
-  const findProviderMeta = (label: string) => {
-    const category = TOOL_NODES.find((cat) =>
-      cat.items.some((i) => i.name === label)
-    );
-    const item = category?.items.find((i) => i.name === label);
-
-    return {
-      category: category?.category ?? 'custom',
-      providerId: item?.id ?? null,
-    };
+  const onNodeDoubleClick = (_: any, node: Node) => {
+    setModalNode(node);
+    setIsModalOpen(true);
   };
 
-  const renderKVGrid = (pairs: Array<[string, React.ReactNode]>) => (
-    <div className="grid grid-cols-2 gap-3 text-sm">
-      {pairs.map(([k, v]) => (
-        <div key={k}>
-          <div className="text-gray-400">{k}</div>
-          <div className="text-white font-medium">{v}</div>
-        </div>
-      ))}
-    </div>
-  );
+  const handleSaveWorkflow = async () => {
+    const unconfigured = nodes.filter((n) => !configuredSteps[n.id]);
+    if (unconfigured.length > 0) {
+      alert('Please configure all steps before saving.');
+      return;
+    }
+
+    const payload = {
+      templateId: slug,
+      nodes,
+      edges,
+      configuredSteps,
+    };
+
+    console.log('SAVE PAYLOAD', payload);
+    // 🔗 API call here
+  };
+
+  const handleTestWorkflow = async () => {
+    console.log('TEST WORKFLOW');
+    // 🔗 test execution logic here
+  };
+
+  /* ================= EFFECT ================= */
+
+  useEffect(() => {
+    const found = mockTemplate.find((t) => t.id === slug);
+    if (!found) return;
+
+    setTemplate(found);
+
+    const { nodes, edges } = buildInitialFlow(found, {});
+    setNodes(reindexStepNumbers(nodes, edges));
+    setEdges(edges);
+  }, [slug, setNodes, setEdges]);
 
   /* ================= UI ================= */
 
   return (
     <div className="flex h-screen bg-[#0B0F14]">
       {/* CANVAS */}
-      <div className="flex-1 p-6 flex flex-col h-full">
-        <div className='flex items-center justify-between mb-6'>
+      <div className="flex-1 p-6 flex flex-col">
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className='text-3xl font-bold text-white'>Edit Template: {template?.name}</h1>
-            <p>{template?.description || "Design your workflow by connection nodes"}</p>
+            <h1 className="text-3xl font-bold text-white">
+              Edit Template: {template?.name}
+            </h1>
+            <p className="text-gray-400">
+              {template?.description || 'Build your automation workflow'}
+            </p>
           </div>
-          <div className='flex items-center gap-3'>
-            {[
-              {
-                icon: Play,
-                text: "Test",
-                variant: "outline",
-                onClick: handleTestWorkflow,
-              },
-              {
-                icon: Save,
-                text: "Save",
-                variant: "default",
-                onClick: handleSaveWorkflow,
-              },
-            ].map(({icon: Icon, text, variant, onClick})=>(
-              <Button key={text} variant={variant as any} className={variant == "outline" ? "border-[#334155] text-gray-300 hover:bg-[#1E293B] hover:text-white" : "bg-green-500 hover:bg-green-600 text-black font-medium"} onClick={onClick}>
-                <Icon className='w-4 h-4 mr-2'/>
-                {text}
-              </Button>
-            ))}
+
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={handleTestWorkflow}
+              className="border-[#334155] text-gray-300"
+            >
+              <Play className="w-4 h-4 mr-2" />
+              Test
+            </Button>
+
+            <Button
+              onClick={handleSaveWorkflow}
+              className="bg-green-500 hover:bg-green-600 text-black"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              Save
+            </Button>
           </div>
         </div>
-        <Card className="bg-[#121826] border-[#1E293B] flex-1 overflow-hidden">
+
+        <Card className="bg-[#121826] border-[#1E293B] flex-1">
           <CardContent className="p-0 h-full">
             <div ref={reactFlowWrapper} className="w-full h-full">
               <ReactFlow
                 nodes={nodes}
                 edges={edges}
-                onNodesChange={onNodesChangeControlled}
+                onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 onConnect={onConnect}
                 onInit={setRfInstance}
                 onDrop={onDrop}
                 onDragOver={onDragOver}
                 onNodeClick={(_, node) => setSelectedNode(node)}
+                onNodeDoubleClick={onNodeDoubleClick}
                 nodeTypes={nodeTypes}
                 fitView
                 className="bg-[#0B0F14]"
@@ -247,29 +240,26 @@ const Page = () => {
             </TabsTrigger>
           </TabsList>
 
-          {/* NODES */}
           <TabsContent value="nodes" className="space-y-4">
-            {TOOL_NODES.map((category) => (
-              <div key={category.id}>
+            {TOOL_NODES.map((cat) => (
+              <div key={cat.id}>
                 <h3 className="text-sm text-gray-400 uppercase mb-2">
-                  {category.category}
+                  {cat.category}
                 </h3>
 
-                {category.items.map((node) => (
+                {cat.items.map((n) => (
                   <div
-                    key={node.id}
+                    key={n.id}
                     draggable
-                    onDragStart={(e) => onDragStart(e, node)}
+                    onDragStart={(e) => onDragStart(e, n)}
                     className="flex items-center p-2 rounded-md hover:bg-[#1E293B] cursor-grab"
                   >
-                    <div className="w-8 h-8 bg-[#1E293B] flex items-center justify-center mr-3 rounded">
-                      <node.icon className="w-4 h-4 text-green-400" />
+                    <div className="w-8 h-8 bg-[#1E293B] rounded flex items-center justify-center mr-3">
+                      <n.icon className="w-4 h-4 text-green-400" />
                     </div>
                     <div>
-                      <p className="text-white text-sm">{node.name}</p>
-                      <p className="text-gray-400 text-xs">
-                        {node.description}
-                      </p>
+                      <p className="text-white text-sm">{n.name}</p>
+                      <p className="text-gray-400 text-xs">{n.description}</p>
                     </div>
                   </div>
                 ))}
@@ -277,69 +267,54 @@ const Page = () => {
             ))}
           </TabsContent>
 
-          {/* PROPERTIES */}
-          <TabsContent value='properties'>
+          <TabsContent value="properties">
             {selectedNode ? (
-              <div className='space-y-4'>
-                <h3 className='text-lg font-medium text-white'>Node Properties</h3>
-                <p>Details fot the selected node</p>
-                {(() =>{
-                  const d = selectedNode.data as any;
-                  const label = d?.label ?? "";
-                  const stepNumber = d?.stepNumber ?? null;
-                  const {category:type, providerId} = findProviderMeta(label);
+              <div className="space-y-3">
+                <h3 className="text-lg font-medium text-white">
+                  Node Properties
+                </h3>
 
-                  const isConfigured = typeof stepNumber == "number" ? !!configuredSteps[Number(stepNumber)]: false;
-                  const accounts = providerId ? userConnections?.filter((c)=> c.platform == providerId) : [];
-
-                  const info = [
-                    ["Name", label || "-"],
-                    ["Step", stepNumber ?? "-"],
-                    ["Type", type],
-                    ["Configured", isConfigured ? "Yes" : "No"],
-                  ] as Array<[string, React.ReactNode]>;
-
-                  const accountsContent = connLoading ? (
-                    <div className='text-gray-500 text-sm'>Loading accounts...</div>
-                  ): providerId ? (
-                    accounts?.length > 0 ? (
-                      <ul className='space-y-2'>
-                        {accounts?.map((acc) =>(
-                          <li key={acc.id} className='flex items-center justify-between bg-[#1E293B] rounded-md p-2 border border-[#334155]'>
-                            <span className='text-sm text-gray-200'>{acc.account_name}</span>
-                            <span className='text-xs text-gray-500'>{acc.platform}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    ): (
-                      <div className='text-gray-500 text-sm'>
-                        No accounts connected for "{providerId}".
-                      </div>
-                    )
-                  ): (
-                    <div className='text-gray-500 text-sm'>this node doesn't require an external account</div>
-                  )
-                  return <div className='space-y-3'>
-                  {renderKVGrid(info)}
-                  <div className='pt-2'>
-                    <div className='text-gray-400 mb-1'>
-                      connected Accounts
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <div className="text-gray-400">Name</div>
+                    <div className="text-white">
+                      {selectedNode.data.label}
                     </div>
-                    {accountsContent  }
                   </div>
-                  </div>; 
-                })()}
+
+                  <div>
+                    <div className="text-gray-400">Step</div>
+                    <div className="text-white">
+                      {selectedNode.data.stepNumber}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-gray-400">Configured</div>
+                    <div className="text-white">
+                      {configuredSteps[selectedNode.id] ? 'Yes' : 'No'}
+                    </div>
+                  </div>
+                </div>
               </div>
-            ):(
-              <div className='text-center py-8'>
-                <p className='text-gray-400'>Select a node to view its properting</p>
-              </div>
+            ) : (
+              <p className="text-gray-400 text-center mt-10">
+                Select a node to view details
+              </p>
             )}
           </TabsContent>
         </Tabs>
       </div>
-      {/* Configuration Model (double click a node to open) */}
-      <NodeConfigurationModel/>
+
+      {/* CONFIG MODAL */}
+      <NodeConfigurationModel
+        isOpen={isModalOpen}
+        nodeData={modalNode?.data || null}
+        onClose={() => setIsModalOpen(false)}
+        onConfigured={(nodeId: string) =>
+          setConfiguredSteps((p) => ({ ...p, [nodeId]: true }))
+        }
+      />
     </div>
   );
 };

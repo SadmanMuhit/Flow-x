@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { ICON_MAP } from './flow-utils';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Settings, X } from 'lucide-react';
 interface NodeData{
     label: string;
     description: string;
@@ -123,7 +123,7 @@ const NodeConfigurationModel = ({
 
     const IconComponent = (nodeData && ICON_MAP[nodeData.icon]) || ICON_MAP.ArrowRight || ArrowRight;
     const platformName = nodeData ? getPlatformName(nodeData.label) : "";
-    const isOAuth = isOAuthProvider(platformName);
+    const isOAuth = isAuthProvider(platformName);
     const isApiKey = isApiKeyProvider(platformName);
     const isCore = isCoreProvider(platformName);
     const displayName = getDisplayName  (platformName);
@@ -179,19 +179,146 @@ const NodeConfigurationModel = ({
                                         className={inputCls}
                                         />
                                     </Field>
-                                ): ()
+                                ): (
+                                    <Field label="Interval (minutes)">
+                                        <input type="number" min={1} value={coreConfig.interval || ""}
+                                        onChange={(e) => setCoreConfig({ ...coreConfig, interval: e.target.value})}
+                                        placeholder='5' className={inputCls}/>
+                                    </Field>
+                                )
                             }
                         </div>
                     );
-                break;
-        
+                    case "http-request":
+                        return(
+                            <div className='space-y-3'>
+                                <Field label="HTTP Method">
+                                    <select className={selectCls} 
+                                    value={coreConfig.method || "GET"}
+                                    onChange={(e) => setCoreConfig({...coreConfig, method:e.target.value})}>
+                                        <option value="GET">GET</option>
+                                        <option value="POST">POST</option>
+                                        <option value="PUT">PUT</option>
+                                        <option value="DELETE">DELETE</option>
+                                        <option value="PATCH">PATCH</option>
+                                    </select>
+                                </Field>
+                                <Field label='url'><input type="url" value={coreConfig.url || ""} onChange={(e)=> setCoreConfig({...coreConfig, url: e.target.value})
+                            } placeholder='https://api.example.com/endpoint' className={inputCls}/></Field>
+                            </div>
+                        );
+                        case "send-notification":
+                            return (
+                                <div className='space-y-3'>
+                                    <Field label="Notification Channel">
+                                        <select className={selectCls} value={coreConfig.channel || "email"} onChange={(e)=> setCoreConfig({...coreConfig, channel: e.target.value})}>
+                                            <option value="email">Email</option>
+                                            <option value="slack">Slack</option>
+                                            <option value="discord">Discord</option>
+                                        </select>
+                                    </Field>
+                                    <Field label="Message Template">
+                                        <textarea value={coreConfig.message || ""}
+                                        onChange={(e)=> setCoreConfig({...coreConfig, message:e.target.value})}
+                                        placeholder='Your notification message...' className={`${inputCls} h-20`}/>
+                                    </Field>
+                                </div>
+                            );
+                            case "ai-generate":
+                                return(
+                                    <div className='space-y-3'>
+                                        <Field label="AI provider">
+                                            <select
+                                            className={selectCls}
+                                            value={coreConfig.provider || "openai"}
+                                            onChange={(e)=> setCoreConfig({...coreConfig, provider: e.target.value})}
+                                            >
+                                                <option value="openai">OpenAI</option>
+                                                <option value="Cloud">Cloud</option>
+                                                <option value="gemini">Gemini</option>
+                                            </select>
+                                        </Field>
+                                        <Field label="promt Template">
+                                            <textarea value={coreConfig.prompt || ""}
+                                            onChange={(e)=> setCoreConfig({...coreConfig,prompt:e.target.value})}
+                                            placeholder='Your AI prompt template'
+                                            className={`${inputCls} h-20`}/>
+                                        </Field>
+                                    </div>
+                                );
+                                case "delay": 
+                                return(
+                                    <div className='space-y-3'>
+                                        <Field label="Delay Duration">
+                                            <div className='flex space-x-2'>
+                                                <input type="number" min={1} value={coreConfig.duration || ""}
+                                                onChange={(e)=> setCoreConfig({...coreConfig, duration: e.target.value})
+                                                } placeholder='5' className={`${inputCls} flex-1`}/>
+                                                <select className={selectCls}
+                                                value={coreConfig.unit || "seconds"} onChange={(e)=> setCoreConfig({...coreConfig, unit: e.target.value})
+                                                }>
+                                                    <option value="milliseconds">ms</option>
+                                                    <option value="seconds">seconds</option>
+                                                    <option value="minutes">minutes</option>
+                                                </select>
+                                            </div>
+                                        </Field>
+                                    </div>
+                                );  
             default:
-                break;
+                return(
+                    <div className='p-3 bg-blue-900/20 border border-blue-800 rounded-md'>
+                        <p className='text-sm text-blue-400'>this {displayName} node is ready to use. No additional configuration required.</p>
+                    </div>
+                );
         }
-    }
+    };
+    const saveDisabled = (isApiKey && !selectedConnection && !apiKey.trim()) || (platformName === "http-request" && !coreConfig.url);
   return (
-    <div>
-      
+    <div className='fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50'>
+      <div className='bg-[#1E293B] rounded-lg p-6 w-full max-w-lg mx-4 border border-gray-700 max-h-[90vh] overflow-y-auto'>
+        <div className='flex items-center justify-between mb-4'>
+            <div className='flex items-center'>
+                <div className='w-8 h-8 rounded-md bg-[#0B0F14] flex items-center justify-center mr-3'>
+                    <IconComponent className='w-4 h-4 text-green-400'/>
+                </div>
+                <h2 className='text-lg font-semibold text-white'>{nodeData.label}</h2>
+            </div>
+            <button onClick={onClose} className='text-gray-400 hover:text-white transition-colors'>
+                <X className='w-5 h-5'/>
+            </button>
+        </div>
+        <div className='space-y-4'>
+            {loading ? (
+                <div className='flex items-center justify-center py-8'>
+                    <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-green-400'>
+
+                    </div>
+                </div>
+            ):(<>{
+                isOAuth && (
+                    <div className='space-y-3'>
+                        <h3 className='text-sm font-medium text-gray-300 flex items-center'>
+                            <Settings className='w-4 h-4 mr-2'/>
+                            connected {displayName} accounts
+                        </h3>
+                        <div className='space-y-2'>
+                            {connections?.length > 0 ? (
+                                connections.map((connection)=> (
+                                    <div key={connection.id} className={`p-3 rounded-md border cursor-pointer transition-colors ${selectedConnection === connection.id ? 'border-green-400 bg-green-900/20' : 'border-gray-700 bg-[#0B0F14]'}`} onClick={()=> setSelectedConnection(connection.id)}>
+                                        <div className="flex items-center justify-between">
+                            
+                                        </div>
+                                    </div>
+                                ))
+                            ): (<></>)}
+                        </div>
+                    </div>
+                )
+            }
+            </>)}
+        </div>
+      </div>
     </div>
   )
 }
