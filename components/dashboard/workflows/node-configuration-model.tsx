@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { ICON_MAP } from './flow-utils';
-import { AlertTriangle, ArrowRight, CheckCircle, Settings, X } from 'lucide-react';
+import { AlertTriangle, ArrowRight, CheckCircle, ExternalLink, Key, Settings, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 interface NodeData{
     label: string;
@@ -329,13 +329,49 @@ const NodeConfigurationModel = ({
                         </div>
                         <div className='flex justify-between mt-2'>
                             <Button
-                            variant="outline" 
-                            ></Button>
+                            variant="outline"
+                            className="border-[#334155] text-gray-300 hover:bg-[#1E293B] hover:text-white"
+                            onClick={()=> handleOAuthConnection(platformName)} 
+                            >
+                                <ExternalLink className='w-4 h-4 mr-2'/>
+                                Connect {displayName}
+                            </Button>
                         </div>
                     </div>
-                )
-            }
-            </>)}
+                )}
+
+                {isApiKey && (
+                   <div className='space-y-3'>
+                    <h3 className='text-sm font-medium text-gray-300 flex items-center'>
+                        <Key className='w-4 h-4 mr-2'/>
+                    </h3>
+                    {connections?.length > 0 && (
+                        <Field label='Saved Keys'>
+                            <select
+                            className={selectCls}
+                            value={selectedConnection || ""}
+                            onChange={(e)=> setSelectedConnection(e.target.value)}>
+                                <option value="">Select a saved key</option>
+                                {connections.map((c)=> (
+                                    <option value={c.id} key={c.id}>
+                                        {c.account_name || `Key ${c.id.slice(0,6)}`}
+                                    </option>
+                                ))}
+                            </select>
+                        </Field>
+                    )}
+                    <Field label='API Key'>
+                        <input 
+                        type="password"
+                        value={apiKey}
+                        onChange={(e)=> setApikey(e.target.value)} 
+                        placeholder='sk-....'
+                        className={inputCls}/>
+                    </Field>
+                   </div> 
+                )}
+            </>
+        )}
         </div>
       </div>
     </div>
