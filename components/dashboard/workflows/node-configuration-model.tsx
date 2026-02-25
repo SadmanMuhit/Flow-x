@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { ICON_MAP } from './flow-utils';
-import { ArrowRight, Settings, X } from 'lucide-react';
+import { AlertTriangle, ArrowRight, CheckCircle, Settings, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 interface NodeData{
     label: string;
     description: string;
@@ -307,11 +308,29 @@ const NodeConfigurationModel = ({
                                 connections.map((connection)=> (
                                     <div key={connection.id} className={`p-3 rounded-md border cursor-pointer transition-colors ${selectedConnection === connection.id ? 'border-green-400 bg-green-900/20' : 'border-gray-700 bg-[#0B0F14]'}`} onClick={()=> setSelectedConnection(connection.id)}>
                                         <div className="flex items-center justify-between">
-                            
+                                            <div>
+                                                <p className='text-sm text-white'>{connection.account_name}</p>
+                                                <p className='text-xs text-gray-400'>
+                                                    commented on {new Date(connection.created_at).toLocaleDateString()}
+                                                </p>
+                                            </div>
+                                            {selectedConnection === connection.id && (
+                                                <CheckCircle className='w-4 h-4 text-green-400'/>
+                                            )}
                                         </div>
                                     </div>
                                 ))
-                            ): (<></>)}
+                            ): (<div className='p-3 rounded-md border border-yellow-600 bg-yellow-900'>
+                                <p className='text-sm text-yellow-300 flex items-center'>
+                                    <AlertTriangle className='w-4 h-4 mr-2'/>
+                                    No connected accounts found for {displayName}</p>
+                            </div>
+                        )}
+                        </div>
+                        <div className='flex justify-between mt-2'>
+                            <Button
+                            variant="outline" 
+                            ></Button>
                         </div>
                     </div>
                 )
