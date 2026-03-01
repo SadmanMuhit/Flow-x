@@ -1,0 +1,58 @@
+import { auth } from "../auth";
+
+export const provider = {
+    gmail: {
+        key: process.env.GOOGLE_CLIENT_ID!,
+        secret: process.env.GOOGEL_CLIENT_SECRET!,
+        scope: [
+            "https://www.googleapis.com/auth/gmail.readonly",
+            "https://www.googleapis.com/auth/gmail.send",
+            "https://www.googleapis.com/auth/gmail.modify",
+            "email",
+            "profile",
+        ],
+        authorize_url: "https://accounts.google.com/o/oauth2/v2/auth",
+        access_url: "https://oauth2.googleapis.com/token",
+        callback: "/api/oauth/gmail/callback",
+    },
+    sheets: {
+        key: process.env.GOOGLE_CLIENT_ID!,
+        secret: process.env.GOOGLE_CLIENT_SECRET!,
+        scope: ["https://googleapis.com/auth/spreadsheets", "email", "profile"],
+        authorize_url: "https://accounts.google.com/o/oauth2/v2/auth",
+        access_url: "https://oauth2.googleapis.com/token",
+        callback: "/api/oauth/sheets/callback",
+    },
+    slack: {
+        key: process.env.SLACK_CLIENT_ID!,
+        secret: process.env.SLACK_CLIENT_SECRET!,
+        scope: ["chat:write", "channels:read", "users:read", "incoming-webhook"],
+        authorize_url: "https://slack.com/oauth/v2/authorize",
+        access_url: "https://slack.com/api/oauth.v2.access",
+        callback: "/api/oauth/slack/callback",
+    },
+    discord: {
+        key: process.env.DISCORD_CLIENT_ID!,
+        secret: process.env.DISCORD_CLIENT_SECRET!,
+        scope: ["identify", "email", "webhook.incoming"],
+        authorize_url: "https://discord.com/api/oauth2/authorize",
+        access_url: "https://discord.com/api/oauth2/token",
+        callback: "/api/oauth/discord/callback",
+    },
+    notion: {
+        key: process.env.NOTION_CLIENT_ID!,
+        secret: process.env.NOTION_CLIENT_SECRET!,
+        scope: ["databases.read", "database:write","pages:write", "pages:read"],
+        authorize_url: "https://api.notion.com/v1/oauth/authorize",
+        access_url: "https://api.notion.com/v1/oauth/token",
+        callback: "/api/oauth/notion/callback",
+    },
+    stripe: {
+        key: process.env.STRIPE_CLIENT_ID!,
+        secret: process.env.STRIPE_CLIENT_SECRET!,
+        scope: ["databases.read", "database:write","pages:write", "pages:read"],
+        authorize_url: "https://api.stripe.com/v1/oauth/authorize",
+        access_url: "https://api.stripe.com/v1/oauth/token",
+        callback: "/api/oauth/stripe/callback",
+    },
+} as const;
