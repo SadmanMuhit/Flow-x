@@ -1,10 +1,8 @@
-import { pgTable, text, boolean, serial } from "drizzle-orm/pg-core";
+import { pgTable, text, uuid } from "drizzle-orm/pg-core";
 
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  email: text("email").notNull().unique(),
-  name: text("name").notNull(),
-  password: text("password").notNull(),
-  isVerified: boolean("isVerified").default(false),
-  verificationToken: text("verificationToken"),
-});
+
+export const connections = pgTable("connections", {
+  id: uuid("id").primaryKey(),
+  user_id: text("user_id").notNull(),
+  platform: text("platform").notNull(),
+})

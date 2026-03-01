@@ -311,9 +311,11 @@ const Page = () => {
         isOpen={isModalOpen}
         nodeData={modalNode?.data || null}
         onClose={() => setIsModalOpen(false)}
-        onConfigured={(nodeId: string) =>
-          setConfiguredSteps((p) => ({ ...p, [nodeId]: true }))
-        }
+        onConfigured={(stepNumber: number) => {
+          if (modalNode) {
+            setConfiguredSteps((p) => ({ ...p, [modalNode.id]: true }));
+          }
+        }}
       />
     </div>
   );
