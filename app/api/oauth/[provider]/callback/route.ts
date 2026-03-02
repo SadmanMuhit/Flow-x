@@ -166,6 +166,25 @@ export async function GET(
             metadata: {raw: tokens,...userInfo},
             updated_at: sql`now()`,
         };
+
+        if(encryptedRefreshToken){
+          updatedData.refresh_token_enc = Buffer.from(encryptedRefreshToken, "utf8");
+        }
+        await db
+        .update(connections)
+        .set(updatedData)
+        .where(eq(connections.id, existingConnection[0].id));
+    }else{
+      await db.insert(connections).values({
+        id: crypto.randomUUID(),
+        user_id: session?.user.id,
+        platform: provider,
+        account_name: accountName,
+        access_token_enc: Buffer.from(encryptedAccessToken, "utf8"),
+        refresh_token_enc: encryptedRefreshToken ? Buffer.from(encryptedRefreshToken, "utf8") : null,
+        iv,
+        metadata: {raw: tokens, ...userInfo},
+      });
     }
   } catch (error) {}
 }
